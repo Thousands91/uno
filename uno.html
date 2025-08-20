@@ -3,77 +3,211 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UNO多人联机版（手机可用）</title>
+  <title>UNO多人游戏 - 卡牌优化版</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      padding: 10px;
+      font-family: 'Arial', sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+      color: #333;
     }
-    .container { max-width: 600px; margin: 0 auto; }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2, h3 { margin-bottom: 15px; color: #2c3e50; }
+    .screen { display: none; }
+    .active { display: block; }
+    .btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+      transition: background-color 0.3s;
+    }
+    .btn:hover { background-color: #2980b9; }
+    .btn-success { background-color: #2ecc71; }
+    .btn-success:hover { background-color: #27ae60; }
+    .btn-danger { background-color: #e74c3c; }
+    .btn-danger:hover { background-color: #c0392b; }
+    .input-group { margin: 15px 0; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .room-info {
+      background-color: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+    }
+    .room-id {
+      font-size: 24px;
+      letter-spacing: 2px;
+      margin: 10px 0;
+      color: #2c3e50;
+      font-weight: bold;
+    }
+    .player-list {
+      margin: 15px 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .player {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 5px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .player.host {
+      border-left: 4px solid #e67e22;
+    }
+    .player.current {
+      background-color: #e3f2fd;
+      border: 1px solid #bbdefb;
+    }
+    .game-area { margin-top: 20px; }
+    /* 卡牌样式优化 */
     .card {
-      width: 70px;
-      height: 100px;
+      width: 80px;
+      height: 120px;
       border: 2px solid #333;
-      border-radius: 8px;
+      border-radius: 10px;
       display: inline-flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       margin: 5px;
-      background: #fff;
       cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-weight: bold;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
     }
-    .card:active { transform: scale(0.95); }
-    .area { margin: 15px 0; padding: 10px; background: white; border-radius: 8px; }
-    .info {
-      padding: 10px;
-      background: #333;
-      color: white;
-      border-radius: 8px;
-      margin: 10px 0;
-      font-size: 16px;
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.15;
+      z-index: 1;
     }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #4CAF50;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
+    .card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
-    button:active { background: #3d8b40; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .player {
-      margin: 10px 0;
-      padding: 8px;
-      background: #eee;
-      border-radius: 5px;
+    .card.selected {
+      border-color: #e67e22;
+      transform: scale(1.05);
     }
-    .current-player { border: 2px solid #ff9800; }
-    #roomCode {
-      padding: 10px;
-      margin: 5px;
-      width: 200px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+    .card .color-name {
+      position: absolute;
+      top: 5px;
+      font-size: 10px;
+      text-transform: uppercase;
+      z-index: 2;
     }
-    .setup {
+    .card .card-value {
+      font-size: 28px;
+      z-index: 2;
+    }
+    .card .card-type {
+      position: absolute;
+      bottom: 5px;
+      font-size: 10px;
+      z-index: 2;
+    }
+    /* 数字牌样式 */
+    .card.number .card-type {
+      content: '数字';
+    }
+    /* 苏丹卡样式 */
+    .card.sultan {
+      border-width: 3px;
+    }
+    .card.sultan::after {
+      content: '苏';
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      font-size: 12px;
+      opacity: 0.7;
+      z-index: 2;
+    }
+    /* 颜色定义 */
+    .color-rock {
+      background-color: #8B7D6B; /* 岩石色 - 石头的颜色 */
+      color: #000;
+    }
+    .color-rock::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23000' d='M10 2c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm-1 3v1h2V7h-2zm0 3v1h2v-1h-2zm2 2H9v1h2v-1z'/%3E%3C/svg%3E");
+    }
+    .color-bronze {
+      background-color: #CD7F32; /* 青铜色 - 铜绿色 */
+      color: #000;
+    }
+    .color-bronze::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23000' d='M10 2c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm-3 5h2v2H7V9zm3 0h2v2h-2V9zm3 0h2v2h-2V9z'/%3E%3C/svg%3E");
+    }
+    .color-silver {
+      background-color: #C0C0C0; /* 白银色 - 银蓝色 */
+      color: #000;
+    }
+    .color-silver::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23000' d='M10 2c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm-1 3h2v1h-2V7zm0 2h2v1h-2V9zm0 2h2v1h-2v-1z'/%3E%3C/svg%3E");
+    }
+    .color-gold {
+      background-color: #FFD700; /* 黄金色 - 金色 */
+      color: #000;
+    }
+    .color-gold::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23000' d='M10 2c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm-3 3h6v1H7V7zm0 2h6v1H7V9zm0 2h6v1H7v-1z'/%3E%3C/svg%3E");
+    }
+    .color-black {
+      background-color: #333333; /* 黑色 - 杀戮卡 */
+      color: #fff;
+    }
+    .color-black::before {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23fff' d='M10 2c-4.4 0-8 3.6-8 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm0 2c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6 2.7-6 6-6zm-1 3h2v4h-2V7zm0 6h2v1h-2v-1z'/%3E%3C/svg%3E");
+    }
+    .deck-area, .discard-area, .hand-area {
+      background-color: #ecf0f1;
       padding: 15px;
-      background: #e8f5e9;
-      border-radius: 8px;
+      border-radius: 5px;
       margin: 10px 0;
     }
-    select {
+    .status {
+      background-color: #3498db;
+      color: white;
       padding: 10px;
-      margin: 5px;
-      border: 1px solid #ccc;
       border-radius: 5px;
+      margin: 10px 0;
+    }
+    .hand-area {
+      overflow-x: auto;
+      padding-bottom: 15px;
+    }
+    .hand-cards {
+      display: flex;
+      min-width: max-content;
     }
     .modal {
       position: fixed;
@@ -82,7 +216,7 @@
       width: 100%;
       height: 100%;
       background: rgba(0,0,0,0.7);
-      display: flex;
+      display: none;
       justify-content: center;
       align-items: center;
       z-index: 100;
@@ -92,751 +226,867 @@
       padding: 20px;
       border-radius: 8px;
       text-align: center;
-      max-width: 300px;
+      max-width: 90%;
+      width: 500px;
     }
-    .room-id-display {
-      font-size: 20px;
-      letter-spacing: 2px;
-      margin: 10px 0;
+    .instructions {
+      background-color: #fff3cd;
       padding: 10px;
-      background: #f5f5f5;
-      border-radius: 5px;
-      font-weight: bold;
-    }
-    .copy-btn {
-      background: #2196F3;
-    }
-    .error {
-      color: #dc3545;
-      margin: 10px 0;
-      padding: 10px;
-      background: #f8d7da;
-      border-radius: 5px;
-    }
-    .connection-status {
-      background: #2196F3;
-      padding: 10px;
-      color: white;
       border-radius: 5px;
       margin: 10px 0;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
 <div class="container">
-  <!-- 连接状态 -->
-  <div id="connectionStatus" class="connection-status">未连接 - 请创建或加入游戏</div>
+  <h1>UNO 多人游戏</h1>
 
-  <!-- 房间设置 -->
-  <div class="setup" id="setupScreen">
-    <h3>创建游戏</h3>
-    <div>
-      <label>玩家人数（2-4人）：</label>
-      <select id="playerCount">
-        <option value="2">2人</option>
-        <option value="3">3人</option>
-        <option value="4" selected>4人</option>
-      </select>
+  <!-- 主屏幕 -->
+  <div id="mainScreen" class="screen active">
+    <h2>游戏大厅</h2>
+    <div class="instructions">
+      游戏规则：每位玩家开局获得7张牌，按颜色或点数出牌，苏丹卡可任意打出。无牌可出时需摸牌，若摸到可出牌可选择是否打出。先出完手牌者获胜。
     </div>
-    <button onclick="createGame()">创建游戏</button>
+    <div class="input-group">
+      <label for="playerName">你的名字</label>
+      <input type="text" id="playerName" placeholder="输入你的名字">
+    </div>
+    <div class="input-group">
+      <label for="maxPlayers">最大玩家数（2-10人）</label>
+      <input type="number" id="maxPlayers" min="2" max="10" value="4">
+    </div>
+    <button class="btn" onclick="createRoom()">创建房间</button>
 
-    <h3 style="margin-top:20px;">加入游戏</h3>
-    <input type="text" id="roomCode" placeholder="输入房间码">
-    <button onclick="joinGame()">加入游戏</button>
-    <div id="roomInfo" style="margin-top:10px;"></div>
+    <div class="input-group" style="margin-top: 30px;">
+      <label for="joinRoomId">房间号</label>
+      <input type="text" id="joinRoomId" placeholder="输入房间号">
+    </div>
+    <button class="btn btn-success" onclick="joinRoom()">加入房间</button>
   </div>
 
-  <!-- 等待界面 -->
-  <div id="waitingScreen" style="display:none" class="area">
-    <h3>等待其他玩家加入...</h3>
-    <div id="waitingPlayers"></div>
-    <div>当前：<span id="currentPlayers">0</span>/<span id="totalPlayers">0</span></div>
-    <button onclick="startGame()" id="startGameBtn" style="margin-top:10px; background:#2196F3;" disabled>开始游戏</button>
-    <button onclick="leaveGame()" style="margin-top:10px; background:#f44336;">离开</button>
+  <!-- 房间等待屏幕 -->
+  <div id="roomScreen" class="screen">
+    <h2>房间等待中</h2>
+    <div class="room-info">
+      <div>房间号: <span id="currentRoomId" class="room-id"></span></div>
+      <div>最大人数: <span id="roomMaxPlayers"></span></div>
+      <div>当前人数: <span id="currentPlayerCount">1</span></div>
+    </div>
+    <h3>玩家列表</h3>
+    <div id="roomPlayerList" class="player-list"></div>
+    <button class="btn btn-success" id="startGameBtn" onclick="startGame()" disabled>开始游戏</button>
+    <button class="btn btn-danger" onclick="leaveRoom()">离开房间</button>
   </div>
 
-  <!-- 游戏主界面 -->
-  <div id="gameScreen" style="display:none">
-    <!-- 游戏信息 -->
-    <div class="info" id="info">等待开始...</div>
+  <!-- 游戏屏幕 -->
+  <div id="gameScreen" class="screen">
+    <h2>游戏进行中</h2>
+    <div class="status" id="gameStatus">游戏即将开始</div>
 
-    <!-- 牌堆和摸牌区 -->
-    <div class="area">
-      <div>牌库（<span id="deckCount">0</span>张）</div>
-      <button id="drawCardBtn" onclick="drawCard()" style="margin-top:10px;">摸牌</button>
+    <div class="deck-area">
+      <h3>牌库 (<span id="deckCount">0</span> 张)</h3>
+      <button class="btn" id="drawCardBtn" onclick="drawCard()">摸牌</button>
     </div>
 
-    <!-- 弃牌堆 -->
-    <div class="area">
-      <div>弃牌堆：</div>
+    <div class="discard-area">
+      <h3>弃牌堆顶</h3>
       <div id="discardPile"></div>
     </div>
 
-    <!-- 其他玩家 -->
-    <div class="area" id="otherPlayers"></div>
+    <div class="player-list">
+      <h3>玩家列表</h3>
+      <div id="gamePlayerList"></div>
+    </div>
 
-    <!-- 手牌区（当前玩家） -->
-    <div class="area">
-      <div>你的手牌：</div>
-      <div id="myHand" style="overflow-x: auto; padding: 10px 0;"></div>
+    <div class="hand-area">
+      <h3>你的手牌 (<span id="myCardCount">0</span> 张)</h3>
+      <div id="myHand" class="hand-cards"></div>
+    </div>
+
+    <button class="btn btn-danger" onclick="leaveGame()">退出游戏</button>
+  </div>
+
+  <!-- 摸牌选择弹窗 -->
+  <div class="modal" id="drawChoiceModal">
+    <div class="modal-content">
+      <h3>你摸到了一张可出的牌</h3>
+      <p>要打出这张牌吗？</p>
+      <div id="drawnCardPreview" style="margin:15px 0;"></div>
+      <button class="btn btn-success" onclick="playDrawnCard()">出牌</button>
+      <button class="btn" onclick="keepDrawnCard()">保留</button>
     </div>
   </div>
-</div>
 
-<!-- 摸牌后选择弹窗 -->
-<div class="modal" id="drawChoiceModal" style="display:none">
-  <div class="modal-content">
-    <p>你摸到了一张可出的牌，要出这张牌吗？</p>
-    <div id="drawnCardPreview" style="margin:15px 0;"></div>
-    <button onclick="playDrawnCard()">出牌</button>
-    <button onclick="keepDrawnCard()">保留</button>
+  <!-- 胜利弹窗 -->
+  <div class="modal" id="winModal">
+    <div class="modal-content">
+      <h2 id="winMessage"></h2>
+      <button class="btn" onclick="closeWinModal()">关闭</button>
+    </div>
   </div>
 </div>
 
 <script>
-  // ==== 游戏核心数据 ====
-  let game = {
-    isHost: false,          // 是否为主机
-    playerId: Math.random().toString(36).substr(2, 8), // 玩家ID
-    playerName: "玩家" + Math.floor(Math.random() * 100), // 玩家名称
-    players: {},            // 玩家列表
-    maxPlayers: 4,          // 最大玩家数
-    deck: [],               // 牌堆
-    discardPile: [],        // 弃牌堆
-    currentPlayer: null,    // 当前回合玩家
-    direction: 1,           // 方向：1顺时针，-1逆时针
-    isGameStarted: false,   // 游戏是否开始
-    drawnCard: null         // 刚摸到的牌
-  };
-
-  // ==== WebRTC 相关 ====
-  let peerConnection;       // P2P连接对象
-  let dataChannel;          // 数据通道
-  let roomCode = "";        // 房间码
-  let iceCandidates = [];   // ICE候选者缓存
-  let connectedPeers = new Set(); // 已连接的节点
-
-  // WebRTC配置（使用谷歌免费STUN服务器）
-  const rtcConfig = {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-  };
-
-  // ==== 游戏初始化 ====
-  function initGame() {
-    // 允许玩家自定义名称
-    const customName = prompt("请输入你的名字：");
-    if (customName) {
-      game.playerName = customName;
+  // 游戏核心数据
+  let gameData = {
+    playerName: "",
+    isHost: false,
+    roomId: null,
+    rooms: {}, // 存储房间信息
+    currentRoom: null,
+    players: [],
+    maxPlayers: 4,
+    deck: [],
+    discardPile: [],
+    currentPlayerIndex: 0,
+    myHand: [],
+    myPlayerId: null,
+    roomRefreshInterval: null,
+    drawnCard: null,
+    // 卡牌颜色映射
+    cardColors: {
+      'rock': 'color-rock',
+      'bronze': 'color-bronze',
+      'silver': 'color-silver',
+      'gold': 'color-gold',
+      'black': 'color-black'
     }
+  };
+
+  // 初始化页面
+  window.onload = function() {
+    // 生成随机玩家名
+    document.getElementById("playerName").value = "玩家_" + Math.floor(Math.random() * 100);
+
+    // 从本地存储加载房间数据
+    const savedRooms = localStorage.getItem('unoRooms');
+    if (savedRooms) {
+      gameData.rooms = JSON.parse(savedRooms);
+    }
+  };
+
+  // 生成随机房间号
+  function generateRoomId() {
+    return Math.floor(Math.random() * 900000) + 100000; // 6位数字
   }
 
-  // ==== WebRTC 核心功能 ====
-  // 创建游戏（作为主机）
-  function createGame() {
-    game.isHost = true;
-    game.players[game.playerId] = {
-      name: game.playerName,
-      hand: [],
-      isReady: false
-    };
+  // 创建房间
+  function createRoom() {
+    const playerName = document.getElementById("playerName").value.trim();
+    const maxPlayers = parseInt(document.getElementById("maxPlayers").value);
 
-    // 创建P2P连接
-    peerConnection = new RTCPeerConnection(rtcConfig);
-    updateStatus("创建游戏中...");
-
-    // 创建数据通道
-    dataChannel = peerConnection.createDataChannel("unoGameChannel");
-    setupDataChannel(dataChannel);
-
-    // 收集ICE候选者
-    peerConnection.onicecandidate = handleIceCandidate;
-
-    // 创建offer
-    peerConnection.createOffer()
-      .then(offer => peerConnection.setLocalDescription(offer))
-      .then(() => {
-        // 生成房间码（简化版：使用SDP的前6个字符）
-        roomCode = btoa(peerConnection.localDescription.sdp.substring(0, 100)).substring(0, 6);
-        document.getElementById("roomCode").value = roomCode;
-        updateStatus(`游戏创建成功！房间码：${roomCode}`);
-        switchScreen("waitingScreen");
-        updateWaitingScreen();
-      })
-      .catch(error => {
-        updateStatus(`创建失败：${error.message}`, true);
-      });
-  }
-
-  // 加入游戏（作为客户端）
-  function joinGame() {
-    const code = document.getElementById("roomCode").value.trim();
-    if (!code || code.length !== 6) {
-      updateStatus("请输入6位有效的房间码", true);
+    if (!playerName) {
+      alert("请输入你的名字");
       return;
     }
 
-    roomCode = code;
-    game.players[game.playerId] = {
-      name: game.playerName,
+    if (maxPlayers < 2 || maxPlayers > 10) {
+      alert("玩家人数必须在2-10人之间");
+      return;
+    }
+
+    // 生成房间号
+    const roomId = generateRoomId();
+
+    // 初始化房间数据
+    const newRoom = {
+      id: roomId,
+      maxPlayers: maxPlayers,
+      players: [],
+      host: null,
+      isGameStarted: false,
+      deck: [],
+      discardPile: [],
+      currentPlayerIndex: 0
+    };
+
+    // 添加创建者
+    const hostPlayer = {
+      id: Date.now().toString(),
+      name: playerName,
+      isHost: true,
       hand: [],
-      isReady: false
+      isCurrent: false
     };
 
-    // 创建P2P连接
-    peerConnection = new RTCPeerConnection(rtcConfig);
-    updateStatus("连接中...");
+    newRoom.players.push(hostPlayer);
+    newRoom.host = hostPlayer.id;
 
-    // 监听数据通道
-    peerConnection.ondatachannel = e => {
-      dataChannel = e.channel;
-      setupDataChannel(dataChannel);
+    // 保存到本地存储
+    gameData.rooms[roomId] = newRoom;
+    localStorage.setItem('unoRooms', JSON.stringify(gameData.rooms));
+
+    // 更新游戏数据
+    gameData.playerName = playerName;
+    gameData.isHost = true;
+    gameData.roomId = roomId;
+    gameData.currentRoom = newRoom;
+    gameData.players = newRoom.players;
+    gameData.myPlayerId = hostPlayer.id;
+
+    // 显示房间屏幕
+    showRoomScreen();
+  }
+
+  // 加入房间
+  function joinRoom() {
+    const playerName = document.getElementById("playerName").value.trim();
+    const roomId = document.getElementById("joinRoomId").value.trim();
+
+    if (!playerName) {
+      alert("请输入你的名字");
+      return;
+    }
+
+    if (!roomId) {
+      alert("请输入房间号");
+      return;
+    }
+
+    // 从本地存储获取房间
+    const rooms = JSON.parse(localStorage.getItem('unoRooms') || '{}');
+    const targetRoom = rooms[roomId];
+
+    if (!targetRoom) {
+      alert("房间不存在");
+      return;
+    }
+
+    if (targetRoom.isGameStarted) {
+      alert("游戏已经开始，无法加入");
+      return;
+    }
+
+    if (targetRoom.players.length >= targetRoom.maxPlayers) {
+      alert("房间已满");
+      return;
+    }
+
+    // 创建新玩家
+    const newPlayer = {
+      id: Date.now().toString() + Math.floor(Math.random() * 1000),
+      name: playerName,
+      isHost: false,
+      hand: [],
+      isCurrent: false
     };
 
-    // 收集ICE候选者
-    peerConnection.onicecandidate = handleIceCandidate;
+    // 添加到房间
+    targetRoom.players.push(newPlayer);
+    rooms[roomId] = targetRoom;
+    localStorage.setItem('unoRooms', JSON.stringify(rooms));
 
-    try {
-      // 解析房间码获取SDP
-      const sdp = atob(code);
-      const remoteDesc = new RTCSessionDescription({
-        type: "offer",
-        sdp: sdp
-      });
+    // 更新游戏数据
+    gameData.playerName = playerName;
+    gameData.isHost = false;
+    gameData.roomId = roomId;
+    gameData.currentRoom = targetRoom;
+    gameData.players = targetRoom.players;
+    gameData.myPlayerId = newPlayer.id;
 
-      // 设置远程描述并创建应答
-      peerConnection.setRemoteDescription(remoteDesc)
-        .then(() => peerConnection.createAnswer())
-        .then(answer => peerConnection.setLocalDescription(answer))
-        .then(() => {
-          updateStatus("连接成功，等待主机确认...");
-        })
-        .catch(error => {
-          updateStatus(`连接失败：${error.message}`, true);
-        });
-    } catch (error) {
-      updateStatus("无效的房间码", true);
+    // 显示房间屏幕
+    showRoomScreen();
+  }
+
+  // 显示房间等待屏幕
+  function showRoomScreen() {
+    // 更新房间信息
+    document.getElementById("currentRoomId").textContent = gameData.roomId;
+    document.getElementById("roomMaxPlayers").textContent = gameData.currentRoom.maxPlayers;
+    updatePlayerList();
+
+    // 只有主机可以开始游戏，且人数至少2人
+    const startBtn = document.getElementById("startGameBtn");
+    startBtn.disabled = !gameData.isHost || gameData.players.length < 2;
+
+    // 切换屏幕
+    document.getElementById("mainScreen").classList.remove("active");
+    document.getElementById("roomScreen").classList.add("active");
+    document.getElementById("gameScreen").classList.remove("active");
+
+    // 定时刷新房间状态
+    if (gameData.roomRefreshInterval) clearInterval(gameData.roomRefreshInterval);
+    gameData.roomRefreshInterval = setInterval(refreshRoomStatus, 2000);
+  }
+
+  // 刷新房间状态
+  function refreshRoomStatus() {
+    if (!gameData.roomId || gameData.currentRoom.isGameStarted) return;
+
+    // 从本地存储更新房间信息
+    const rooms = JSON.parse(localStorage.getItem('unoRooms') || '{}');
+    const updatedRoom = rooms[gameData.roomId];
+
+    if (!updatedRoom) {
+      alert("房间已解散");
+      leaveRoom();
+      return;
+    }
+
+    // 更新玩家列表
+    gameData.currentRoom = updatedRoom;
+    gameData.players = updatedRoom.players;
+    updatePlayerList();
+
+    // 更新开始按钮状态
+    document.getElementById("startGameBtn").disabled =
+      !gameData.isHost || gameData.players.length < 2;
+
+    // 如果游戏已经开始，进入游戏
+    if (updatedRoom.isGameStarted) {
+      clearInterval(gameData.roomRefreshInterval);
+      enterGame();
     }
   }
 
-  // 处理ICE候选者
-  function handleIceCandidate(event) {
-    if (event.candidate) {
-      iceCandidates.push(event.candidate);
-      // 发送ICE候选者给对方
-      sendData({
-        type: "iceCandidate",
-        candidate: event.candidate
-      });
-    }
-  }
+  // 更新玩家列表
+  function updatePlayerList() {
+    const playerListEl = document.getElementById("roomPlayerList");
+    playerListEl.innerHTML = "";
 
-  // 设置数据通道
-  function setupDataChannel(channel) {
-    channel.onopen = () => {
-      updateStatus("已连接到游戏房间");
-      connectedPeers.add(peerConnection);
-
-      // 向主机发送加入信息
-      sendData({
-        type: "playerJoin",
-        playerId: game.playerId,
-        playerName: game.playerName
-      });
-
-      // 如果是主机，更新开始按钮状态
-      if (game.isHost) {
-        document.getElementById("startGameBtn").disabled = false;
-      }
-    };
-
-    channel.onmessage = e => {
-      const data = JSON.parse(e.data);
-      handleReceivedData(data);
-    };
-
-    channel.onclose = () => {
-      updateStatus("连接已断开", true);
-      connectedPeers.delete(peerConnection);
-      switchScreen("setupScreen");
-    };
-
-    channel.onerror = error => {
-      updateStatus(`连接错误：${error.message}`, true);
-    };
-  }
-
-  // 发送数据给其他玩家
-  function sendData(data) {
-    if (dataChannel && dataChannel.readyState === "open") {
-      dataChannel.send(JSON.stringify(data));
-    }
-  }
-
-  // 处理收到的数据
-  function handleReceivedData(data) {
-    switch (data.type) {
-      case "playerJoin":
-        // 处理新玩家加入
-        game.players[data.playerId] = {
-          name: data.playerName,
-          hand: [],
-          isReady: false
-        };
-
-        // 主机广播所有玩家信息
-        if (game.isHost) {
-          broadcastPlayerList();
-        } else {
-          updateWaitingScreen();
-        }
-        break;
-
-      case "playerList":
-        // 更新玩家列表
-        game.players = data.players;
-        updateWaitingScreen();
-        break;
-
-      case "iceCandidate":
-        // 添加ICE候选者
-        if (peerConnection && data.candidate) {
-          peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate))
-            .catch(error => console.error("添加ICE候选者失败:", error));
-        }
-        break;
-
-      case "gameStart":
-        // 开始游戏
-        game.isGameStarted = true;
-        game.deck = data.deck;
-        game.discardPile = data.discardPile;
-        game.players = data.players;
-        game.currentPlayer = data.currentPlayer;
-        switchScreen("gameScreen");
-        renderGame();
-        break;
-
-      case "cardPlayed":
-        // 处理其他玩家出牌
-        game.discardPile = data.discardPile;
-        game.players[data.playerId].hand = data.playerHand;
-        game.currentPlayer = data.nextPlayer;
-        renderGame();
-
-        // 检查是否有人获胜
-        if (data.playerHand.length === 0) {
-          alert(`恭喜！${game.players[data.playerId].name} 获胜！`);
-          resetGame();
-        }
-        break;
-
-      case "cardDrawn":
-        // 处理其他玩家摸牌
-        game.deck = data.deck;
-        game.players[data.playerId].hand = data.playerHand;
-        renderGame();
-        break;
-
-      case "turnChanged":
-        // 回合切换
-        game.currentPlayer = data.currentPlayer;
-        renderGame();
-        break;
-    }
-  }
-
-  // 主机广播玩家列表
-  function broadcastPlayerList() {
-    sendData({
-      type: "playerList",
-      players: game.players
+    gameData.players.forEach(player => {
+      const playerEl = document.createElement("div");
+      playerEl.className = `player ${player.isHost ? 'host' : ''}`;
+      playerEl.innerHTML = `
+          <span>${player.name}</span>
+          <span>${player.isHost ? '（房主）' : ''}</span>
+        `;
+      playerListEl.appendChild(playerEl);
     });
-    updateWaitingScreen();
+
+    document.getElementById("currentPlayerCount").textContent = gameData.players.length;
   }
 
-  // ==== 游戏逻辑 ====
   // 开始游戏
   function startGame() {
-    if (!game.isHost) return;
+    if (!gameData.isHost) return;
 
-    // 生成牌堆并洗牌
-    game.deck = createDeck();
+    // 标记游戏开始
+    gameData.currentRoom.isGameStarted = true;
 
-    // 发牌（每人7张）
-    Object.keys(game.players).forEach(playerId => {
-      const hand = [];
+    // 初始化牌库（根据规则完善）
+    gameData.currentRoom.deck = createDeck();
+
+    // 发牌：每位玩家7张
+    gameData.currentRoom.players.forEach(player => {
+      player.hand = [];
       for (let i = 0; i < 7; i++) {
-        hand.push(game.deck.shift());
+        player.hand.push(gameData.currentRoom.deck.shift());
       }
-      game.players[playerId].hand = hand;
     });
 
     // 翻一张作为起始牌
-    game.discardPile = [game.deck.shift()];
+    gameData.currentRoom.discardPile = [gameData.currentRoom.deck.shift()];
 
-    // 设置第一个玩家
-    game.currentPlayer = Object.keys(game.players)[0];
+    // 保存房间状态
+    const rooms = JSON.parse(localStorage.getItem('unoRooms') || '{}');
+    rooms[gameData.roomId] = gameData.currentRoom;
+    localStorage.setItem('unoRooms', JSON.stringify(rooms));
 
-    // 通知所有玩家游戏开始
-    sendData({
-      type: "gameStart",
-      deck: game.deck,
-      discardPile: game.discardPile,
-      players: game.players,
-      currentPlayer: game.currentPlayer
-    });
-
-    // 主机自己进入游戏
-    game.isGameStarted = true;
-    switchScreen("gameScreen");
-    renderGame();
+    // 进入游戏
+    enterGame();
   }
 
-  // 生成牌堆
+  // 创建牌库 - 按照规则实现完整牌型
   function createDeck() {
     const COLORS = ['rock', 'bronze', 'silver', 'gold'];
-    const CHAR_TYPES = ['oppose', 'support'];
     let deck = [];
 
-    // 数字卡：4色×10数字（0-9）
+    // 1. 数字卡：4色×0-9（共4×10=40张）
     COLORS.forEach(color => {
       for (let n = 0; n <= 9; n++) {
-        deck.push({ type: 'number', color, number: n });
+        deck.push({
+          type: 'number',
+          color: color,
+          number: n,
+          displayText: `${n}`,
+          colorName: getColorDisplayName(color)
+        });
       }
     });
 
-    // 人物卡：4色×2类型×3张
-    COLORS.forEach(color => {
-      CHAR_TYPES.forEach(charType => {
-        for (let i = 0; i < 3; i++) {
-          deck.push({ type: 'character', color, charType });
-        }
+    // 2. 苏丹卡：奢靡、纵欲、征服、杀戮四种类型
+    // 每种类型的数量：岩石3张，青铜2张，白银2张，黄金1张
+    const SULTAN_TYPES = ['奢靡', '纵欲', '征服'];
+    SULTAN_TYPES.forEach(type => {
+      // 岩石色3张
+      for (let i = 0; i < 3; i++) {
+        deck.push({
+          type: 'sultan',
+          sultanType: type,
+          color: 'rock',
+          displayText: type,
+          colorName: getColorDisplayName('rock')
+        });
+      }
+      // 青铜色2张
+      for (let i = 0; i < 2; i++) {
+        deck.push({
+          type: 'sultan',
+          sultanType: type,
+          color: 'bronze',
+          displayText: type,
+          colorName: getColorDisplayName('bronze')
+        });
+      }
+      // 白银色2张
+      for (let i = 0; i < 2; i++) {
+        deck.push({
+          type: 'sultan',
+          sultanType: type,
+          color: 'silver',
+          displayText: type,
+          colorName: getColorDisplayName('silver')
+        });
+      }
+      // 黄金色1张
+      deck.push({
+        type: 'sultan',
+        sultanType: type,
+        color: 'gold',
+        displayText: type,
+        colorName: getColorDisplayName('gold')
       });
     });
 
-    // 苏丹卡
-    deck.push(...Array(3).fill({ type: 'sultan', color: 'rock' }));
-    deck.push(...Array(2).fill({ type: 'sultan', color: 'bronze' }));
-    deck.push(...Array(2).fill({ type: 'sultan', color: 'silver' }));
-    deck.push(...Array(1).fill({ type: 'sultan', color: 'gold' }));
-
-    // 功能卡
-    COLORS.forEach(color => {
-      deck.push({ type: 'luxury', color });
-      deck.push({ type: 'lust', color });
-      deck.push({ type: 'conquer', color });
-    });
-    deck.push(...Array(4).fill({ type: 'slaughter' }));
+    // 杀戮卡4张（黑色）
+    for (let i = 0; i < 4; i++) {
+      deck.push({
+        type: 'sultan',
+        sultanType: '杀戮',
+        color: 'black',
+        displayText: '杀戮',
+        colorName: '黑色'
+      });
+    }
 
     // 洗牌
-    return deck.sort(() => Math.random() - 0.5);
+    return shuffleArray(deck);
   }
 
-  // 出牌
-  function playCard(cardIndex) {
-    if (game.currentPlayer !== game.playerId) {
-      alert("还没到你的回合！");
+  // 获取颜色的中文名称
+  function getColorDisplayName(color) {
+    const names = {
+      'rock': '岩石',
+      'bronze': '青铜',
+      'silver': '白银',
+      'gold': '黄金',
+      'black': '黑色'
+    };
+    return names[color] || color;
+  }
+
+  // 洗牌函数
+  function shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  }
+
+  // 进入游戏界面
+  function enterGame() {
+    // 同步游戏数据
+    gameData.deck = gameData.currentRoom.deck;
+    gameData.discardPile = gameData.currentRoom.discardPile;
+    gameData.currentPlayerIndex = gameData.currentRoom.currentPlayerIndex;
+
+    // 找到自己的手牌
+    const myPlayer = gameData.players.find(p => p.id === gameData.myPlayerId);
+    if (myPlayer) {
+      gameData.myHand = myPlayer.hand;
+    }
+
+    // 显示游戏屏幕
+    showGameScreen();
+
+    // 定时刷新游戏状态
+    if (gameData.roomRefreshInterval) clearInterval(gameData.roomRefreshInterval);
+    gameData.roomRefreshInterval = setInterval(refreshGameStatus, 1000);
+  }
+
+  // 显示游戏屏幕
+  function showGameScreen() {
+    // 更新游戏信息
+    updateGameStatus();
+    updateDiscardPile();
+    updateMyHand();
+    updateGamePlayerList();
+
+    // 切换屏幕
+    document.getElementById("mainScreen").classList.remove("active");
+    document.getElementById("roomScreen").classList.remove("active");
+    document.getElementById("gameScreen").classList.add("active");
+  }
+
+  // 更新弃牌堆
+  function updateDiscardPile() {
+    const discardEl = document.getElementById("discardPile");
+    discardEl.innerHTML = "";
+
+    if (gameData.discardPile.length > 0) {
+      const topCard = gameData.discardPile[gameData.discardPile.length - 1];
+      const cardEl = createCardElement(topCard);
+      discardEl.appendChild(cardEl);
+    }
+  }
+
+  // 更新我的手牌
+  function updateMyHand() {
+    const handEl = document.getElementById("myHand");
+    handEl.innerHTML = "";
+
+    document.getElementById("myCardCount").textContent = gameData.myHand.length;
+
+    gameData.myHand.forEach((card, index) => {
+      const cardEl = createCardElement(card);
+      // 只有当前回合玩家可以出牌
+      const currentPlayer = gameData.players[gameData.currentPlayerIndex];
+      if (currentPlayer && currentPlayer.id === gameData.myPlayerId) {
+        cardEl.onclick = () => selectCard(index);
+      }
+      handEl.appendChild(cardEl);
+    });
+  }
+
+  // 选择要出的牌
+  function selectCard(index) {
+    const card = gameData.myHand[index];
+    const topCard = gameData.discardPile[gameData.discardPile.length - 1];
+
+    if (!canPlayCard(card, topCard)) {
+      alert("这张牌不能出！");
       return;
     }
 
-    const myHand = [...game.players[game.playerId].hand];
-    const card = myHand[cardIndex];
-    const topCard = game.discardPile[game.discardPile.length - 1];
+    playCard(index);
+  }
 
-    if (!canPlay(card, topCard)) {
+  // 创建牌元素 - 优化样式
+  function createCardElement(card) {
+    const cardEl = document.createElement("div");
+    // 设置卡牌基本样式和颜色类
+    cardEl.className = `card ${card.type} ${gameData.cardColors[card.color]}`;
+
+    // 构建卡牌内容
+    cardEl.innerHTML = `
+        <span class="color-name">${card.colorName}</span>
+        <span class="card-value">${card.displayText}</span>
+        <span class="card-type">${card.type === 'number' ? '数字' : '苏丹'}</span>
+      `;
+
+    return cardEl;
+  }
+
+  // 更新游戏玩家列表
+  function updateGamePlayerList() {
+    const playerListEl = document.getElementById("gamePlayerList");
+    playerListEl.innerHTML = "";
+
+    gameData.players.forEach((player, index) => {
+      const playerEl = document.createElement("div");
+      playerEl.className = `player ${player.isHost ? 'host' : ''} ${index === gameData.currentPlayerIndex ? 'current' : ''}`;
+      playerEl.innerHTML = `
+          <span>${player.name}</span>
+          <span>${player.hand.length} 张牌 ${index === gameData.currentPlayerIndex ? '(当前回合)' : ''}</span>
+        `;
+      playerListEl.appendChild(playerEl);
+    });
+  }
+
+  // 更新游戏状态
+  function updateGameStatus() {
+    const currentPlayer = gameData.players[gameData.currentPlayerIndex];
+    const statusEl = document.getElementById("gameStatus");
+
+    if (currentPlayer) {
+      statusEl.textContent = `当前回合: ${currentPlayer.name} ${currentPlayer.isHost ? '(房主)' : ''}`;
+
+      // 如果是自己的回合，启用摸牌按钮
+      const isMyTurn = currentPlayer.id === gameData.myPlayerId;
+      document.getElementById("drawCardBtn").disabled = !isMyTurn;
+    }
+
+    // 更新牌库数量
+    document.getElementById("deckCount").textContent = gameData.deck.length;
+  }
+
+  // 出牌逻辑
+  function playCard(index) {
+    const myPlayer = gameData.players.find(p => p.id === gameData.myPlayerId);
+    if (!myPlayer) return;
+
+    // 检查是否是自己的回合
+    const currentPlayer = gameData.players[gameData.currentPlayerIndex];
+    if (currentPlayer.id !== myPlayer.id) {
+      alert("还没到你的回合");
+      return;
+    }
+
+    const card = gameData.myHand[index];
+    const topCard = gameData.discardPile[gameData.discardPile.length - 1];
+
+    // 检查是否可以出牌
+    if (!canPlayCard(card, topCard)) {
       alert("这张牌不能出！");
       return;
     }
 
     // 移除手牌中的牌
-    myHand.splice(cardIndex, 1);
-    game.players[game.playerId].hand = myHand;
+    gameData.myHand.splice(index, 1);
+    myPlayer.hand = gameData.myHand;
 
     // 添加到弃牌堆
-    game.discardPile.push(card);
+    gameData.discardPile.push(card);
+
+    // 检查是否获胜
+    if (gameData.myHand.length === 0) {
+      showWinModal(`${myPlayer.name} 获胜！`);
+      return;
+    }
 
     // 切换到下一个玩家
-    const playerIds = Object.keys(game.players);
-    const currentIdx = playerIds.indexOf(game.currentPlayer);
-    let nextIdx = (currentIdx + game.direction + playerIds.length) % playerIds.length;
-    const nextPlayerId = playerIds[nextIdx];
+    gameData.currentPlayerIndex = (gameData.currentPlayerIndex + 1) % gameData.players.length;
 
-    // 广播出牌信息
-    sendData({
-      type: "cardPlayed",
-      playerId: game.playerId,
-      playerHand: myHand,
-      discardPile: game.discardPile,
-      nextPlayer: nextPlayerId
-    });
+    // 保存游戏状态
+    saveGameState();
 
-    // 更新本地状态
-    game.currentPlayer = nextPlayerId;
-    renderGame();
-
-    // 检查胜利
-    if (myHand.length === 0) {
-      alert(`恭喜！你获胜了！`);
-      resetGame();
-    }
+    // 更新界面
+    updateGameStatus();
+    updateDiscardPile();
+    updateMyHand();
+    updateGamePlayerList();
   }
 
-  // 摸牌
+  // 出牌规则检查
+  function canPlayCard(card, topCard) {
+    // 苏丹卡可任意出
+    if (card.type === 'sultan') {
+      return true;
+    }
+
+    // 数字牌规则：颜色相同或数字相同
+    if (card.type === 'number') {
+      return topCard.color === card.color ||
+        (topCard.type === 'number' && topCard.number === card.number);
+    }
+
+    return false;
+  }
+
+  // 摸牌逻辑
   function drawCard() {
-    if (game.currentPlayer !== game.playerId) {
-      alert("还没到你的回合！");
+    const myPlayer = gameData.players.find(p => p.id === gameData.myPlayerId);
+    if (!myPlayer) return;
+
+    // 检查是否是自己的回合
+    const currentPlayer = gameData.players[gameData.currentPlayerIndex];
+    if (currentPlayer.id !== myPlayer.id) {
+      alert("还没到你的回合");
       return;
     }
-    if (game.deck.length === 0) {
-      alert("牌库已空！");
-      return;
+
+    if (gameData.deck.length === 0) {
+      // 牌库空了，用弃牌堆重新洗牌（保留最上面一张）
+      if (gameData.discardPile.length <= 1) {
+        alert("牌库已空，无法摸牌！");
+        return;
+      }
+
+      const topCard = gameData.discardPile.pop();
+      gameData.deck = shuffleArray(gameData.discardPile);
+      gameData.discardPile = [topCard];
+      alert("牌库已空，重新洗牌！");
     }
 
-    // 从牌库摸一张牌
-    const newCard = game.deck[0];
-    game.deck = game.deck.slice(1);
+    // 摸一张牌
+    const newCard = gameData.deck.shift();
+    gameData.myHand.push(newCard);
+    myPlayer.hand = gameData.myHand;
 
-    // 添加到自己的手牌
-    const myHand = [...game.players[game.playerId].hand, newCard];
-    game.players[game.playerId].hand = myHand;
-
-    // 广播摸牌信息
-    sendData({
-      type: "cardDrawn",
-      playerId: game.playerId,
-      playerHand: myHand,
-      deck: game.deck
-    });
-
-    // 检查新摸的牌是否可出
-    const topCard = game.discardPile[game.discardPile.length - 1];
-    if (canPlay(newCard, topCard)) {
+    // 检查新摸的牌是否可以出
+    const topCard = gameData.discardPile[gameData.discardPile.length - 1];
+    if (canPlayCard(newCard, topCard)) {
       // 显示选择弹窗
-      game.drawnCard = newCard;
+      gameData.drawnCard = newCard;
       document.getElementById("drawnCardPreview").innerHTML = "";
       document.getElementById("drawnCardPreview").appendChild(createCardElement(newCard));
       document.getElementById("drawChoiceModal").style.display = "flex";
     } else {
       // 不能出，切换玩家
-      const playerIds = Object.keys(game.players);
-      const currentIdx = playerIds.indexOf(game.currentPlayer);
-      let nextIdx = (currentIdx + game.direction + playerIds.length) % playerIds.length;
-      const nextPlayerId = playerIds[nextIdx];
-
-      sendData({
-        type: "turnChanged",
-        currentPlayer: nextPlayerId
-      });
-
-      game.currentPlayer = nextPlayerId;
-      renderGame();
+      gameData.currentPlayerIndex = (gameData.currentPlayerIndex + 1) % gameData.players.length;
     }
+
+    // 保存游戏状态
+    saveGameState();
+
+    // 更新界面
+    updateGameStatus();
+    updateMyHand();
   }
 
-  // 出刚摸到的牌
+  // 摸牌后选择出牌
   function playDrawnCard() {
-    if (!game.drawnCard) return;
+    if (!gameData.drawnCard) return;
 
-    const myHand = game.players[game.playerId].hand;
-    const cardIndex = myHand.length - 1; // 最后一张是刚摸的牌
+    const myPlayer = gameData.players.find(p => p.id === gameData.myPlayerId);
+    if (!myPlayer) return;
+
+    // 找到刚摸的牌的索引（最后一张）
+    const cardIndex = gameData.myHand.length - 1;
     playCard(cardIndex);
 
     // 关闭弹窗
     document.getElementById("drawChoiceModal").style.display = "none";
-    game.drawnCard = null;
+    gameData.drawnCard = null;
   }
 
-  // 保留刚摸到的牌
+  // 摸牌后选择保留
   function keepDrawnCard() {
     document.getElementById("drawChoiceModal").style.display = "none";
-    game.drawnCard = null;
 
     // 切换到下一个玩家
-    const playerIds = Object.keys(game.players);
-    const currentIdx = playerIds.indexOf(game.currentPlayer);
-    let nextIdx = (currentIdx + game.direction + playerIds.length) % playerIds.length;
-    const nextPlayerId = playerIds[nextIdx];
+    gameData.currentPlayerIndex = (gameData.currentPlayerIndex + 1) % gameData.players.length;
 
-    sendData({
-      type: "turnChanged",
-      currentPlayer: nextPlayerId
-    });
+    // 保存游戏状态
+    saveGameState();
 
-    game.currentPlayer = nextPlayerId;
-    renderGame();
+    // 更新界面
+    updateGameStatus();
+    gameData.drawnCard = null;
   }
 
-  // 检查是否可出牌
-  function canPlay(card, topCard) {
-    if (!topCard || card.type === 'sultan') return true;
-    if (card.color === topCard.color) return true;
-    if (card.type === topCard.type) {
-      if (card.type === 'number' && card.number === topCard.number) return true;
-      if (card.type !== 'number') return true;
-    }
-    return false;
-  }
+  // 显示胜利弹窗
+  function showWinModal(message) {
+    document.getElementById("winMessage").textContent = message;
+    document.getElementById("winModal").style.display = "flex";
 
-  // ==== 界面渲染 ====
-  // 渲染游戏界面
-  function renderGame() {
-    const myInfo = game.players[game.playerId];
-    if (!myInfo) return;
-
-    // 更新牌库数量
-    document.getElementById("deckCount").textContent = game.deck.length;
-
-    // 显示当前回合信息
-    const currentPlayerName = game.players[game.currentPlayer]?.name || "未知";
-    document.getElementById("info").textContent =
-      `当前回合：${currentPlayerName} | 方向：${game.direction === 1 ? '顺时针' : '逆时针'}`;
-
-    // 控制摸牌按钮状态
-    document.getElementById("drawCardBtn").disabled = game.currentPlayer !== game.playerId;
-
-    // 渲染弃牌堆
-    const discardDiv = document.getElementById("discardPile");
-    discardDiv.innerHTML = "";
-    if (game.discardPile.length) {
-      const topCard = game.discardPile[game.discardPile.length - 1];
-      discardDiv.appendChild(createCardElement(topCard));
-    } else {
-      discardDiv.textContent = "空";
-    }
-
-    // 渲染其他玩家
-    const otherPlayersDiv = document.getElementById("otherPlayers");
-    otherPlayersDiv.innerHTML = "";
-    Object.keys(game.players).forEach(id => {
-      if (id === game.playerId) return;
-      const player = game.players[id];
-      const div = document.createElement("div");
-      div.className = `player ${id === game.currentPlayer ? 'current-player' : ''}`;
-      div.textContent = `${player.name}（${player.hand?.length || 0}张牌）`;
-      otherPlayersDiv.appendChild(div);
-    });
-
-    // 渲染自己的手牌
-    const myHandDiv = document.getElementById("myHand");
-    myHandDiv.innerHTML = "";
-    if (myInfo.hand) {
-      myInfo.hand.forEach((card, idx) => {
-        const cardEl = createCardElement(card);
-        if (game.currentPlayer === game.playerId) {
-          cardEl.onclick = () => playCard(idx);
-        }
-        myHandDiv.appendChild(cardEl);
-      });
+    // 清除刷新定时器
+    if (gameData.roomRefreshInterval) {
+      clearInterval(gameData.roomRefreshInterval);
     }
   }
 
-  // 创建卡牌元素
-  function createCardElement(card) {
-    const div = document.createElement("div");
-    div.className = "card";
-    if (card.type === "number") {
-      div.innerHTML = `${card.color}<br>${card.number}`;
-    } else if (card.type === "character") {
-      div.innerHTML = `${card.color}<br>${card.charType}`;
-    } else if (card.type === "sultan") {
-      div.innerHTML = `苏丹<br>${card.color}`;
-    } else {
-      div.innerHTML = card.type === "slaughter" ? "杀戮" : `${card.type}<br>${card.color}`;
-    }
-    const colors = { rock: "#8B4513", bronze: "#CD7F32", silver: "#C0C0C0", gold: "#FFD700" };
-    if (card.color && colors[card.color]) {
-      div.style.borderColor = colors[card.color];
-      div.style.color = colors[card.color];
-    }
-    return div;
+  // 关闭胜利弹窗
+  function closeWinModal() {
+    document.getElementById("winModal").style.display = "none";
+    leaveGame();
   }
 
-  // 更新等待界面
-  function updateWaitingScreen() {
-    const playerCount = Object.keys(game.players).length;
-    document.getElementById("currentPlayers").textContent = playerCount;
-    document.getElementById("totalPlayers").textContent = game.maxPlayers;
+  // 刷新游戏状态
+  function refreshGameStatus() {
+    if (!gameData.roomId) return;
 
-    const waitingPlayersDiv = document.getElementById("waitingPlayers");
-    waitingPlayersDiv.innerHTML = "";
-    Object.values(game.players).forEach(player => {
-      const div = document.createElement("div");
-      div.textContent = player.name;
-      waitingPlayersDiv.appendChild(div);
-    });
+    // 从本地存储获取最新状态
+    const rooms = JSON.parse(localStorage.getItem('unoRooms') || '{}');
+    const updatedRoom = rooms[gameData.roomId];
 
-    // 主机可以开始游戏的条件
-    if (game.isHost && playerCount >= 2) {
-      document.getElementById("startGameBtn").disabled = false;
+    if (!updatedRoom || !updatedRoom.isGameStarted) {
+      alert("游戏已结束或房间已解散");
+      leaveGame();
+      return;
     }
+
+    // 更新游戏数据
+    gameData.currentRoom = updatedRoom;
+    gameData.deck = updatedRoom.deck;
+    gameData.discardPile = updatedRoom.discardPile;
+    gameData.currentPlayerIndex = updatedRoom.currentPlayerIndex;
+    gameData.players = updatedRoom.players;
+
+    // 更新自己的手牌
+    const myPlayer = gameData.players.find(p => p.id === gameData.myPlayerId);
+    if (myPlayer) {
+      gameData.myHand = myPlayer.hand;
+    }
+
+    // 检查是否有玩家获胜
+    const winner = gameData.players.find(p => p.hand.length === 0);
+    if (winner) {
+      showWinModal(`${winner.name} 获胜！`);
+      return;
+    }
+
+    // 更新界面
+    updateGameStatus();
+    updateDiscardPile();
+    updateMyHand();
+    updateGamePlayerList();
   }
 
-  // 切换显示的界面
-  function switchScreen(screenId) {
-    document.getElementById("setupScreen").style.display = "none";
-    document.getElementById("waitingScreen").style.display = "none";
-    document.getElementById("gameScreen").style.display = "none";
-    document.getElementById(screenId).style.display = "block";
+  // 保存游戏状态
+  function saveGameState() {
+    if (!gameData.isHost || !gameData.roomId) return;
+
+    // 更新房间数据
+    gameData.currentRoom.deck = gameData.deck;
+    gameData.currentRoom.discardPile = gameData.discardPile;
+    gameData.currentRoom.currentPlayerIndex = gameData.currentPlayerIndex;
+    gameData.currentRoom.players = gameData.players;
+
+    // 保存到本地存储
+    const rooms = JSON.parse(localStorage.getItem('unoRooms') || '{}');
+    rooms[gameData.roomId] = gameData.currentRoom;
+    localStorage.setItem('unoRooms', JSON.stringify(rooms));
   }
 
-  // 更新状态信息
-  function updateStatus(message, isError = false) {
-    const statusEl = document.getElementById("connectionStatus");
-    statusEl.textContent = message;
-    statusEl.style.background = isError ? "#dc3545" : "#2196F3";
+  // 离开房间
+  function leaveRoom() {
+    if (gameData.roomRefreshInterval) {
+      clearInterval(gameData.roomRefreshInterval);
+      gameData.roomRefreshInterval = null;
+    }
+
+    // 如果是房主，解散房间
+    if (gameData.isHost && gameData.roomId) {
+      const rooms = JSON.parse(localStorage.getItem('unoRooms') || '{}');
+      delete rooms[gameData.roomId];
+      localStorage.setItem('unoRooms', JSON.stringify(rooms));
+    } else if (gameData.roomId && gameData.myPlayerId) {
+      // 如果是普通玩家，从房间移除
+      const rooms = JSON.parse(localStorage.getItem('unoRooms') || '{}');
+      const room = rooms[gameData.roomId];
+      if (room && !room.isGameStarted) {
+        room.players = room.players.filter(p => p.id !== gameData.myPlayerId);
+        rooms[gameData.roomId] = room;
+        localStorage.setItem('unoRooms', JSON.stringify(rooms));
+      }
+    }
+
+    // 重置游戏数据
+    resetGameData();
+
+    // 回到主屏幕
+    document.getElementById("mainScreen").classList.add("active");
+    document.getElementById("roomScreen").classList.remove("active");
+    document.getElementById("gameScreen").classList.remove("active");
   }
 
   // 离开游戏
   function leaveGame() {
-    // 关闭连接
-    if (dataChannel) {
-      dataChannel.close();
-    }
-    if (peerConnection) {
-      peerConnection.close();
-    }
-
-    // 重置游戏状态
-    resetGame();
-    switchScreen("setupScreen");
-    updateStatus("已离开游戏");
+    leaveRoom();
   }
 
-  // 重置游戏
-  function resetGame() {
-    game = {
+  // 重置游戏数据
+  function resetGameData() {
+    gameData = {
+      ...gameData,
       isHost: false,
-      playerId: Math.random().toString(36).substr(2, 8),
-      playerName: game.playerName, // 保留玩家名称
-      players: {},
-      maxPlayers: 4,
+      roomId: null,
+      currentRoom: null,
+      players: [],
       deck: [],
       discardPile: [],
-      currentPlayer: null,
-      direction: 1,
-      isGameStarted: false,
+      currentPlayerIndex: 0,
+      myHand: [],
+      myPlayerId: null,
+      roomRefreshInterval: null,
       drawnCard: null
     };
-
-    // 清除WebRTC相关
-    peerConnection = null;
-    dataChannel = null;
-    iceCandidates = [];
-    connectedPeers.clear();
   }
-
-  // 页面加载时初始化
-  window.onload = initGame;
-
-  // 页面关闭时清理
-  window.onbeforeunload = function() {
-    if (dataChannel) {
-      dataChannel.close();
-    }
-  };
 </script>
 </body>
 </html>
